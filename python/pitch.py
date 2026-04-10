@@ -18,9 +18,9 @@ class Pitch:
         :raises ValueError: If duration is not a positive number
         :raises ValueError: If loudness is not in the interval [0, 1]
         """
-        if not self.frequency or self.frequency <= 0:
+        if not frequency or frequency <= 0:
             raise ValueError('Frequency must be a positive number')
-        if not self.duration or self.duration <= 0:
+        if not duration or duration <= 0:
             raise ValueError('Duration must be a positive number')
         
         self.frequency = frequency
@@ -51,6 +51,54 @@ class Pitch:
 
         stream.stop_stream()
         stream.close()
+
+    def save_to_file(self, file_type: str, output_path: str):
+        # make necessary imports only if we need to
+        import os
+        import wave
+        from pydub import AudioSegment
+
+        if not file_type:
+            raise ValueError("file_type is required.")
+        if not output_path:
+            raise ValueError("output_path is required.")
+
+        filetype = file_type.lower().lstrip('.')
+
+        # Add or replace extension to match requested output type.
+        root, _ext = os.path.splitext(output_path)
+        final_path = root + f".{filetype}"
+
+        out_dir = os.path.dirname(final_path)
+        if out_dir:
+            os.makedirs(out_dir, exist_ok=True)
+
+        pcm = np.clip(self.samples, -1.0, 1.0) # type: ignore
+        pcm16 = (pcm * 32767).astype(np.int16)
+
+        if filetype == 'wav':
+            with wave.open(final_path, 'wb') as wf:
+                wf.setnchannels(1)
+                wf.setsampwidth(2)
+                wf.setframerate(self.sample_rate) # type: ignore
+                wf.writeframes(pcm16.tobytes())
+            return
+
+        # For compressed formats, export through ffmpeg via pydub.
+        supported_ffmpeg_formats = {
+            'mp3', 'flac', 'ogg', 'aac', 'm4a', 'wma', 'aiff', 'opus', 'webm'
+        }
+        if filetype not in supported_ffmpeg_formats:
+            supported = ', '.join(sorted({'wav', *supported_ffmpeg_formats}))
+            raise ValueError(f"Unsupported file type '{filetype}'. Supported types: {supported}")
+
+        segment = AudioSegment(
+            data=pcm16.tobytes(),
+            sample_width=2,
+            frame_rate=self.sample_rate, # type: ignore
+            channels=1,
+        )
+        segment.export(final_path, format=filetype)
 
     def cleanup(self):
         """Delete the PyAudio instance if the pitch is no longer needed
