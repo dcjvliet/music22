@@ -3,16 +3,21 @@ import numpy as np
 
 
 class Pitch:
-    def __init__(self, pitch: float, duration: float, sample_rate: int = 44100):
+    def __init__(self, pitch: float, duration: float, sample_rate: int = 44100, amplitude: float = 1):
         self.pitch = pitch
         self.duration = duration
         self.sample_rate = sample_rate
-        self.audio = pyaudio.PyAudio()
+        self.amplitude = amplitude
+        self.audio = None
 
         # generate samples required to play the pitch
-        self.samples = (np.sin(2 * np.pi * np.arange(self.sample_rate * self.duration) * self.pitch / self.sample_rate)).astype(np.float32)
+        self.samples = (self.amplitude * np.sin(2 * np.pi * np.arange(self.sample_rate * self.duration) * self.pitch / self.sample_rate)).astype(np.float32)
 
     def play(self):
+        # create audio if necessary
+        if self.audio is None:
+            self.audio = pyaudio.PyAudio()
+
         stream = self.audio.open(format=pyaudio.paFloat32,
                                  channels=1,
                                  rate=self.sample_rate,
@@ -24,4 +29,5 @@ class Pitch:
         stream.close()
 
     def cleanup(self):
-        self.audio.terminate()
+        if self.audio is not None:
+            self.audio.terminate()
