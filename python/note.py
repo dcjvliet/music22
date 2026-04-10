@@ -6,6 +6,12 @@ from .pitch import Pitch
 
 class Note:
     def __init__(self, pitches: list[Pitch]):
+        """Initializes a Note object
+
+        :param pitches: A list of Pitch objects that make up the note
+        :type pitches: list[Pitch]
+        :raises ValueError: If no pitches are provided
+        """
         if not pitches or len(pitches) == 0:
             raise ValueError('At least one pitch is required to create a note')
         
@@ -15,6 +21,8 @@ class Note:
         self.sample_rate = None
 
     def _mix_samples(self):
+        """Mix the samples of the notes individual pitches together
+        """
         max_duration = max(pitch.duration for pitch in self.pitches) # Find the maximum duration
         sample_rate = min(pitch.sample_rate for pitch in self.pitches) # Use the lowest sample rate among pitches
         
@@ -40,6 +48,8 @@ class Note:
         self.sample_rate = sample_rate
 
     def play(self):
+        """Play the note
+        """
         if self.mixed is None or self.sample_rate is None:
             self._mix_samples()
 
@@ -57,6 +67,16 @@ class Note:
         stream.close()
 
     def save_to_file(self, file_type: str, output_path: str):
+        """Save the note to an output file
+
+        :param file_type: The file extension
+        :type file_type: str
+        :param output_path: The output file path
+        :type output_path: str
+        :raises ValueError: If file_type is not specified
+        :raises ValueError: If output_path is not specified
+        :raises ValueError: If file_type is not supported
+        """
         # make necessary imports only if we need to
         import os
         import wave
@@ -109,5 +129,7 @@ class Note:
         segment.export(final_path, format=filetype)
 
     def cleanup(self):
+        """Delete the PyAudio instance if the note is no longer needed
+        """
         if self.audio is not None:
             self.audio.terminate()

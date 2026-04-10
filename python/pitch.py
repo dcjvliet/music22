@@ -53,6 +53,16 @@ class Pitch:
         stream.close()
 
     def save_to_file(self, file_type: str, output_path: str):
+        """Save the pitch to an output file
+
+        :param file_type: File extension
+        :type file_type: str
+        :param output_path: Output file path
+        :type output_path: str
+        :raises ValueError: If file_type is not specified
+        :raises ValueError: If output_path is not specified
+        :raises ValueError: If file_type is not supported
+        """
         # make necessary imports only if we need to
         import os
         import wave
